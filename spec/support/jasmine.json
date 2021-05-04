@@ -1,6 +1,6 @@
 {
   "spec_dir": ".",
-  "spec_files": ["bin/**/*[sS]pec.js"],
+  "spec_files": ["src/**/*[sS]pec.ts"],
   "helpers": ["spec/helpers/**/*.js"],
   "stopSpecOnExpectationFailure": false,
   "random": true
