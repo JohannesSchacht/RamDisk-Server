@@ -13,12 +13,16 @@ export class Folder extends FilesystemObject {
 
   Add(object: FilesystemObject) {
     const o = this.Lookup(object.Name);
+    if (o === -1) {
+      this.Remove(this.Entries[o]);
+    }
+    object.Parent = this.Name;
     this.Entries.push(object);
   }
   RemoveByName(name: string) {
     const o = this.Lookup(name);
     if (o === -1) {
-      throw new Error(`"Index ${name}"`);
+      throw new Error(`"Index ${name}" not found`);
     }
     this.Remove(o);
   }
