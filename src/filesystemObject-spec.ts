@@ -5,11 +5,11 @@ describe("Create file system", () => {
   // For every test case we need UserService instance so before running each test case the UserService instance will be created
   beforeEach(() => {
     filesystem = new Folder("/", "/");
-    throw new Error("xx");
   });
 
+  it("true", () => expect(true).toBe(true, "really"));
   // Test case to ensure correct root folder
   it("Should be defined", () => {
-    expect(filesystem.Name.toMatch("/", "root name should be /"));
+    expect(filesystem.Name).toMatch("x", "root name should be /");
   });
 });
