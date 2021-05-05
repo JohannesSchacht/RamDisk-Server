@@ -5,12 +5,25 @@
       "type": "typescript",
       "tsconfig": "tsconfig.json",
       "option": "watch",
-      "problemMatcher": ["$tsc-watch"],
+      "problemMatcher": [
+        "$tsc-watch"
+      ],
       "group": {
         "kind": "build",
         "isDefault": true
       },
       "label": "tsc: watch - tsconfig.json"
+    },
+    {
+      "type": "npm",
+      "script": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "label": "npm: test",
+      "detail": "tsc && jasmine-ts"
     }
   ]
 }
