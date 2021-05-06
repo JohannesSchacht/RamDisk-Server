@@ -1,2 +1,5 @@
+ecec for commands + throw in error case
+ls austesten
+
 Tests with huge number of files -> Performance
 Change [] to Map in Folder -> Performance

@@ -12,7 +12,7 @@ rl.on("line", (line: string) => {
   rl.setPrompt(`${cli.Prompt}> `);
   const result = cli.Execute(line);
   if (result.exit) rl.close();
-  else console.log(result.output);
+  else if (result.output !== "") console.log(result.output);
   rl.setPrompt(`${cli.Prompt}> `);
   rl.prompt();
 }).on("close", () => {
