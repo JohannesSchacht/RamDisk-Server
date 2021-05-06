@@ -1,16 +1,20 @@
 /*tslint:disable:no-console*/
 
-import { Folder, PlainFile } from "./filesystemObject";
+import readline = require("readline");
+import { Cli } from "./cli";
 
-/* for (const i in ["/", "/", "/"]) console.log(i);
+const cli = new Cli();
 
-const filesystem = new Folder("/", "/");
-const file1 = new PlainFile("f1", "/");
-const file2 = new PlainFile("f2", "/");
-const folder1 = new Folder("folder1", "/");
-
-filesystem.Add(file1);
-filesystem.Add(folder1);
-folder1.Add(file2); */
-
-console.log("done");
+const rl = readline.createInterface(process.stdin, process.stdout);
+rl.setPrompt(`${cli.Prompt}> `);
+rl.prompt();
+rl.on("line", (line: string) => {
+  rl.setPrompt(`${cli.Prompt}> `);
+  const result = cli.Execute(line);
+  if (result.exit) rl.close();
+  else console.log(result.output);
+  rl.setPrompt(`${cli.Prompt}> `);
+  rl.prompt();
+}).on("close", () => {
+  process.exit(0);
+});
