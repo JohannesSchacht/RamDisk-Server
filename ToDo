@@ -1,5 +1,7 @@
-ecec for commands + throw in error case
-ls austesten
+GetFile (suchen und ggf. erzeugen)
+    output redirection erweitern
+
+Input -> echo, cat
 
 Tests with huge number of files -> Performance
 Change [] to Map in Folder -> Performance
