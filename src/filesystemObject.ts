@@ -67,11 +67,6 @@ export class Folder extends FilesystemObject {
     return [f].concat(new Array(...this.entries));
   }
 
-  GetRoot(): Folder {
-    if (this.IsRoot()) return this;
-    return (this.Parent as Folder).GetRoot();
-  }
-
   CurrentDirectoryPath(): string {
     if (this.IsRoot()) return "/";
     const cwd = this.Parent?.CurrentDirectoryPath();

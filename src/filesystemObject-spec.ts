@@ -101,8 +101,13 @@ describe("Folder: ", () => {
     expect(folderA.IsRoot()).toBeFalse();
   });
   it("gets the right root", () => {
-    expect(root.GetRoot()).toBe(root);
+    expect(getRoot(root)).toBe(root);
     const folderA = root.Lookup("Folder-A") as Folder;
-    expect(folderA.GetRoot()).toBe(root);
+    expect(getRoot(folderA)).toBe(root);
   });
 });
+
+function getRoot(folder: Folder): Folder {
+  while (!folder.IsRoot()) folder = folder.Parent as Folder;
+  return folder;
+}
