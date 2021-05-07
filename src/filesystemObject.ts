@@ -11,6 +11,10 @@ export class FilesystemObject {
   constructor(public Name: string, parent?: Folder) {
     this.Parent = parent;
   }
+
+  public IsRoot(): boolean {
+    return this instanceof Folder && this.Parent === this;
+  }
 }
 
 export class PlainFile extends FilesystemObject {
@@ -40,41 +44,22 @@ export class Folder extends FilesystemObject {
     return object;
   }
 
-  /*   RemoveByName(name: string) {
-    const o = this.Lookup(name);
-    if (o === null) {
-      throw new Error(`"Index ${name}" not found`);
-    }
-    this.Remove(o);
-  } */
-
   Remove(object: FilesystemObject) {
     const idx = this.entries.indexOf(object);
-    if (idx === -1) {
-      throw new Error(`"Index ${object.Name}"`);
-    }
+    if (idx === -1) throw new Error(`"Not found ${object.Name}"`);
     this.entries.splice(idx, 1);
   }
 
   Lookup(name: string): FilesystemObject | null {
-    const idx = this.entries.findIndex(
-      (o: FilesystemObject) => o.Name === name
-    );
-    return idx === -1 ? null : this.entries[idx];
+    const result = this.entries.filter((o) => o.Name === name).pop();
+    return result === undefined ? null : result;
   }
 
   LookupFolder(name: string): Folder | null {
-    const folder = this.entries.find(
-      (o) => o.Name === name && o instanceof Folder
-    );
-    return folder === undefined ? null : (folder as Folder);
-  }
-
-  LookupFile(name: string): PlainFile | null {
-    const folder = this.entries.find(
-      (o) => o.Name === name && o instanceof PlainFile
-    );
-    return folder === undefined ? null : (folder as PlainFile);
+    const result = this.entries
+      .filter((o) => o.Name === name && o instanceof Folder)
+      .pop();
+    return result === undefined ? null : (result as Folder);
   }
 
   GetEntries(): FilesystemObject[] {
@@ -83,72 +68,13 @@ export class Folder extends FilesystemObject {
   }
 
   GetRoot(): Folder {
-    if (this.isRoot()) return this;
+    if (this.IsRoot()) return this;
     return (this.Parent as Folder).GetRoot();
   }
 
-  private isRoot(): boolean {
-    return this.Parent === this;
-  }
-
-  FindPath(path: string): FilesystemObject | null {
-    const pathArray = path.split("/");
-
-    if (pathArray.length === 2 && pathArray[0] === "" && pathArray[1] === "")
-      return this.GetRoot();
-
-    if (pathArray.length === 1) return this.Lookup(pathArray[0]);
-
-    let newFolder: Folder | null;
-    if (this.isAbsolutePath(path)) {
-      newFolder = this.GetRoot();
-    } else {
-      newFolder = this.LookupFolder(pathArray[0]);
-      if (newFolder == null) return null;
-    }
-    pathArray.shift();
-    const newPath: string = pathArray.join("/");
-    return newFolder.FindPath(newPath);
-  }
-
-  CreateFolder(path: string) {
-    const pathArray = path.split("/");
-
-    if (pathArray.length === 2 && pathArray[0] === "" && pathArray[1] === "")
-      return;
-    if (pathArray.length === 1 && pathArray[0] === "") return;
-
-    let startFolder: Folder;
-    if (pathArray[0] === "") {
-      startFolder = this.GetRoot();
-      pathArray.shift();
-    } else {
-      startFolder = this;
-    }
-    startFolder.createFolder(pathArray);
-  }
-
-  private createFolder(path: string[]) {
-    let tmp = this.Lookup(path[0]);
-    if (tmp instanceof PlainFile)
-      throw new Error(`File exists: ${this.GetCurrentDirectory() + path[0]}`);
-
-    if (tmp == null) {
-      tmp = new Folder(path[0]);
-      this.Add(tmp);
-    }
-    if (path.length > 1) {
-      path.shift();
-      (tmp as Folder).createFolder(path);
-    }
-  }
-
-  GetCurrentDirectory(): string {
-    if (this.isRoot()) return "/";
-    return this.Parent?.GetCurrentDirectory() + "/" + this.Name;
-  }
-
-  private isAbsolutePath(path: string): boolean {
-    return path[0] === "/";
+  CurrentDirectoryPath(): string {
+    if (this.IsRoot()) return "/";
+    const cwd = this.Parent?.CurrentDirectoryPath();
+    return (cwd === "/" ? "" : cwd) + "/" + this.Name;
   }
 }

@@ -1,7 +1,2 @@
-GetFile (suchen und ggf. erzeugen)
-    output redirection erweitern
-
-Input -> echo, cat
-
-Tests with huge number of files -> Performance
-Change [] to Map in Folder -> Performance
+GetRoot() liefert nicht null, casting überflüssig
+    ! - Syntax

@@ -1,5 +1,7 @@
 /* tslint:disable:max-classes-per-file */
 
+import { Filesystem } from "./filesystem";
+
 import {
   CreateRootFolder,
   PlainFile,
@@ -7,7 +9,7 @@ import {
   FilesystemObject,
 } from "./filesystemObject";
 
-import * as su from "./stringUtilities";
+import * as su from "./utilities";
 
 export type Command = {
   command: string | null;
@@ -62,7 +64,7 @@ export class Cli {
         return { exit, output: exec(lsCommand, cmd, this.Fsys) };
       case "cd":
         const tmp = exec(cdCommand, cmd, this.Fsys);
-        this.Prompt = this.Fsys.GetCurrentDirectory();
+        this.Prompt = this.Fsys.CurrentDirectoryPath();
         return { exit, output: tmp };
       case "touch":
         return { exit, output: exec(touchCommand, cmd, this.Fsys) };
@@ -70,6 +72,8 @@ export class Cli {
         return { exit, output: exec(echoCommand, cmd, this.Fsys) };
       case "cat":
         return { exit, output: exec(catCommand, cmd, this.Fsys) };
+      case "rm":
+        return { exit, output: exec(rmCommand, cmd, this.Fsys) };
       default:
         return { exit, output: `Unkown command: ${cmd.command}` };
     }
@@ -91,40 +95,14 @@ function exec(
   if (cmd.output === null && cmd.outputAppend === null) return result;
 
   if (cmd.output != null) {
-    const out: PlainFile = fs.FindPath(cmd.output) as PlainFile;
+    const out: PlainFile = fs.CreateFile(cmd.output);
     out.Write(result);
   }
   if (cmd.outputAppend != null) {
-    const out: PlainFile = fs.FindPath(cmd.outputAppend) as PlainFile;
+    const out: PlainFile = fs.CreateFile(cmd.outputAppend);
     out.Append(result);
   }
   return "";
-}
-
-class Filesystem {
-  Curr: Folder;
-  private root: Folder;
-
-  constructor() {
-    this.root = CreateRootFolder();
-    this.Curr = this.root;
-  }
-
-  FindPath(path: string): FilesystemObject | null {
-    return this.Curr.FindPath(path);
-  }
-
-  CreateFolder(path: string) {
-    this.Curr.CreateFolder(path);
-  }
-
-  GetRoot(): Folder {
-    return this.Curr.GetRoot();
-  }
-
-  GetCurrentDirectory(): string {
-    return this.Curr.GetCurrentDirectory();
-  }
 }
 
 // Commands -------------------------------------------------------------
@@ -135,6 +113,86 @@ function pwdCommand(cmd: Command, fs: Filesystem): string {
 function mkdirCommand(cmd: Command, fs: Filesystem): string {
   if (cmd.arguments.length === 0) throw new Error("No directory specified");
   for (const dir of cmd.arguments) fs.CreateFolder(dir);
+  return "";
+}
+
+function cdCommand(cmd: Command, fs: Filesystem): string {
+  if (cmd.arguments.length === 0) {
+    fs.Curr = fs.GetRoot();
+    return "";
+  }
+  if (cmd.arguments.length > 1) throw new Error("Too many arguments");
+
+  const folderName = cmd.arguments[0];
+  if (folderName === "..") {
+    fs.Curr = fs.Curr.Parent as Folder;
+    return "";
+  }
+  const tmp = fs.FindPath(folderName);
+  if (tmp == null || tmp instanceof PlainFile)
+    throw new Error(`cannot find directory ${folderName}`);
+
+  fs.Curr = tmp as Folder;
+  return "";
+}
+
+function touchCommand(cmd: Command, fs: Filesystem): string {
+  if (cmd.arguments.length === 0) throw new Error("Missing file operand");
+
+  for (const f of cmd.arguments) {
+    const tmp = fs.FindPath(f);
+    if (tmp !== null && tmp instanceof PlainFile) continue;
+    fs.CreateFile(f);
+  }
+  return "";
+}
+
+function echoCommand(cmd: Command, fs: Filesystem): string {
+  let result: string = cmd.arguments.join(" ");
+  if (cmd.input != null) {
+    if (result !== "") result += "\n";
+    result += getContent(cmd.input, fs);
+  }
+  return result;
+}
+
+function getContent(path: string, fs: Filesystem): string {
+  const file = fs.FindPath(path);
+  if (file === null) throw new Error(`cannot find file ${path}`);
+  if (file instanceof PlainFile) return file.Contents;
+  const cmd: Command = {
+    command: "ls",
+    arguments: ["-l", path],
+    input: null,
+    output: null,
+    outputAppend: null,
+  };
+  return lsCommand(cmd, fs);
+}
+
+function catCommand(cmd: Command, fs: Filesystem): string {
+  let result: string = "";
+  for (const f of cmd.arguments) {
+    const tmp = fs.FindPath(f);
+    if (tmp == null || tmp instanceof Folder)
+      throw new Error(`File not found: ${f}`);
+    if (result !== "") result += "\n";
+    result += (tmp as PlainFile).Contents;
+  }
+  if (cmd.input != null) {
+    if (result !== "") result += "\n";
+    result += getContent(cmd.input, fs);
+  }
+  return result;
+}
+
+function rmCommand(cmd: Command, fs: Filesystem): string {
+  for (const f of cmd.arguments) {
+    const obj = fs.FindPath(f);
+    if (obj == null) throw new Error(`File not found: ${f}`);
+    if (obj.IsRoot()) throw new Error(`Cannot remove root directory`);
+    obj.Parent?.Remove(obj);
+  }
   return "";
 }
 
@@ -206,63 +264,6 @@ function lsObject(object: FilesystemObject, extName?: string): string {
       : (object as PlainFile).Contents.length;
   const name = extName === undefined ? object.Name : extName;
   return `${typeletter}\t${name}\t${size}`;
-}
-
-function cdCommand(cmd: Command, fs: Filesystem): string {
-  if (cmd.arguments.length === 0) {
-    fs.Curr = fs.GetRoot();
-    return "";
-  }
-  if (cmd.arguments.length > 1) throw new Error("Too many arguments");
-
-  const folderName = cmd.arguments[0];
-  if (folderName === "..") {
-    fs.Curr = fs.Curr.Parent as Folder;
-    return "";
-  }
-  const tmp = fs.FindPath(folderName);
-  if (tmp == null || tmp instanceof PlainFile)
-    throw new Error(`cannot find directory ${folderName}`);
-  fs.Curr = tmp as Folder;
-  return "";
-}
-
-function touchCommand(cmd: Command, fs: Filesystem): string {
-  if (cmd.arguments.length === 0) throw new Error("Missing file operand");
-
-  for (const f of cmd.arguments) {
-    const path = f.split("/");
-    const file = path.pop() as string;
-    let targetFolder = fs.Curr;
-    if (path.length > 0) {
-      const base = path.join("/");
-      fs.CreateFolder(base);
-      targetFolder = fs.FindPath(base) as Folder;
-    }
-    targetFolder.Add(new PlainFile(file));
-  }
-  return "";
-}
-
-function echoCommand(cmd: Command, fs: Filesystem): string {
-  const result: string = cmd.arguments.join(" ");
-  return result;
-}
-
-function catCommand(cmd: Command, fs: Filesystem): string {
-  let result: string = "";
-  for (const p of cmd.arguments) {
-    const tmp = fs.FindPath(p);
-    if (tmp == null || tmp instanceof Folder)
-      throw new Error(`File not found: ${p}`);
-    if (result === "") result += "\n";
-    result += (tmp as PlainFile).Contents;
-  }
-  return result;
-}
-
-function rmCommand(cmd: Command, fs: Filesystem): string {
-  return "not yet implemented";
 }
 
 // Anaylse commands ------------------------------------------------------

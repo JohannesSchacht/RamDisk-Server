@@ -1,4 +1,9 @@
-import { resourceLimits } from "node:worker_threads";
+import {
+  CreateRootFolder,
+  PlainFile,
+  Folder,
+  FilesystemObject,
+} from "./filesystemObject";
 
 export function splitPath(name: string): { absolute: boolean; path: string[] } {
   const s = name.trim();
@@ -79,4 +84,19 @@ function skipWhitespace(line: string, index: number): number {
 
 function isWhitespace(c: string): boolean {
   return " \t\n\r\v".indexOf(c) > -1;
+}
+
+export function createSomeFileSystem(root: Folder) {
+  root.Add(new PlainFile("File-1"));
+  const folderA: Folder = root.Add(new Folder("Folder-A")) as Folder;
+  folderA.Add(new PlainFile("File-A1"));
+  folderA.Add(new PlainFile("File-A2"));
+  return root;
+  /*
+    root
+      |___ File-1
+      |___Folder-A
+           |___File-A1
+           |___File-A2
+  */
 }

@@ -1,5 +1,5 @@
 import { analyseCommand, Command } from "./cli";
-import * as su from "./stringUtilities";
+import * as su from "./utilities";
 
 describe("analyseCommand:", () => {
   const td: {

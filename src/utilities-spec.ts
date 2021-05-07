@@ -1,4 +1,4 @@
-import * as su from "./stringUtilities";
+import * as su from "./utilities";
 
 describe("Path analysis:", () => {
   const td: {
