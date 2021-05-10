@@ -19,6 +19,7 @@ export function IsPlainFile(
 ): fsObject is PlainFile {
   return fsObject instanceof PlainFile;
 }
+
 export class FilesystemObject {
   constructor(public Name: string, public Parent: Folder) {}
 

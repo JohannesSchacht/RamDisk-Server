@@ -1,7 +1,6 @@
 import { Filesystem } from "./filesystem";
 import * as su from "./utilities";
 import {
-  CreateRootFolder,
   IsFolder,
   PlainFile,
   Folder,
@@ -146,9 +145,9 @@ describe("FindPath", () => {
 
     it(`Case ${test.n}`, () => {
       filesystem.Curr = findFolder(filesystem, test.cwd);
-      const tmp = filesystem.FindPath(test.path);
-      if (test.output === null) expect(tmp).toBeNull();
-      else expect((tmp as FilesystemObject).Name).toMatch(test.output);
+      const fsObj = filesystem.FindPath(test.path);
+      if (test.output === null) expect(fsObj).toBeNull();
+      else expect((fsObj as FilesystemObject).Name).toMatch(test.output);
     });
   }
 });
