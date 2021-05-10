@@ -37,7 +37,7 @@ export class Filesystem {
   CreateFolder(path: string): Folder {
     const pathArray = this.GetAbsolutePath(path).split("/");
     pathArray.shift();
-    let curr: Folder | null = this.GetRoot();
+    let curr: Folder = this.GetRoot();
 
     for (let i = 0; i < pathArray.length; i++) {
       let nextCurr = (curr as Folder).Lookup(pathArray[i]); // casting ok
