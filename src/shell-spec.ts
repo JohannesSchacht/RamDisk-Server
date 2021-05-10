@@ -1,4 +1,4 @@
-import { analyseCommand, Command } from "./cli";
+import { analyseCommand, Command } from "./shell";
 import * as su from "./utilities";
 
 describe("analyseCommand:", () => {

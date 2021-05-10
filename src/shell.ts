@@ -20,7 +20,7 @@ export type Command = {
   outputAppend: string | null;
 };
 
-export class Cli {
+export class Shell {
   Prompt: string;
   Fsys: Filesystem;
 

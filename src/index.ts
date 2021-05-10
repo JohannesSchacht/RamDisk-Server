@@ -1,19 +1,19 @@
 /*tslint:disable:no-console*/
 
 import readline = require("readline");
-import { Cli } from "./cli";
+import { Shell } from "./shell";
 
-const cli = new Cli();
+const shell = new Shell();
 
 const rl = readline.createInterface(process.stdin, process.stdout);
-rl.setPrompt(`${cli.Prompt}> `);
+rl.setPrompt(`${shell.Prompt}> `);
 rl.prompt();
 rl.on("line", (line: string) => {
-  rl.setPrompt(`${cli.Prompt}> `);
-  const result = cli.Execute(line);
+  rl.setPrompt(`${shell.Prompt}> `);
+  const result = shell.Execute(line);
   if (result.exit) rl.close();
   else if (result.output !== "") console.log(result.output);
-  rl.setPrompt(`${cli.Prompt}> `);
+  rl.setPrompt(`${shell.Prompt}> `);
   rl.prompt();
 }).on("close", () => {
   process.exit(0);
