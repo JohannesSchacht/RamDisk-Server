@@ -1,16 +1,26 @@
 /* tslint:disable:max-classes-per-file */
 
 export function CreateRootFolder(): Folder {
-  const root = new Folder("/");
+  const tmp = { Name: "temorary name" };
+  Object.assign(tmp, { Parent: undefined });
+  const root = new Folder("/", tmp as Folder);
   root.Parent = root;
   return root;
 }
 
+export function IsFolder(
+  fsObject: FilesystemObject | null
+): fsObject is Folder {
+  return fsObject instanceof Folder;
+}
+
+export function IsPlainFile(
+  fsObject: FilesystemObject | null
+): fsObject is PlainFile {
+  return fsObject instanceof PlainFile;
+}
 export class FilesystemObject {
-  Parent: Folder | undefined = undefined;
-  constructor(public Name: string, parent?: Folder) {
-    this.Parent = parent;
-  }
+  constructor(public Name: string, public Parent: Folder) {}
 
   public IsRoot(): boolean {
     return this instanceof Folder && this.Parent === this;
@@ -33,6 +43,18 @@ export class PlainFile extends FilesystemObject {
 
 export class Folder extends FilesystemObject {
   private entries: FilesystemObject[] = [];
+
+  CreateFolder(name: string): Folder {
+    const newFolder = new Folder(name, this);
+    this.Add(newFolder);
+    return newFolder;
+  }
+
+  CreateFile(name: string): PlainFile {
+    const newfile = new PlainFile(name, this);
+    this.Add(newfile);
+    return newfile;
+  }
 
   Add(object: FilesystemObject): FilesystemObject {
     const o = this.Lookup(object.Name);
@@ -59,7 +81,14 @@ export class Folder extends FilesystemObject {
     const result = this.entries
       .filter((o) => o.Name === name && o instanceof Folder)
       .pop();
-    return result === undefined ? null : (result as Folder);
+    return result === undefined ? null : (result as Folder); // casting ok
+  }
+
+  LookupFile(name: string): PlainFile | null {
+    const result = this.entries
+      .filter((o) => o.Name === name && o instanceof PlainFile)
+      .pop();
+    return result === undefined ? null : (result as PlainFile); // casting ok
   }
 
   GetEntries(): FilesystemObject[] {

@@ -87,10 +87,10 @@ function isWhitespace(c: string): boolean {
 }
 
 export function createSomeFileSystem(root: Folder) {
-  root.Add(new PlainFile("File-1"));
-  const folderA: Folder = root.Add(new Folder("Folder-A")) as Folder;
-  folderA.Add(new PlainFile("File-A1"));
-  folderA.Add(new PlainFile("File-A2"));
+  root.CreateFile("File-1");
+  const folderA = root.CreateFolder("Folder-A");
+  folderA.CreateFile("File-A1");
+  folderA.CreateFile("File-A2");
   return root;
   /*
     root

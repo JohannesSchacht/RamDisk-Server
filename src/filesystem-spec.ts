@@ -2,6 +2,7 @@ import { Filesystem } from "./filesystem";
 import * as su from "./utilities";
 import {
   CreateRootFolder,
+  IsFolder,
   PlainFile,
   Folder,
   FilesystemObject,
@@ -97,15 +98,15 @@ describe("Filesystem: GetFilename, GetBaseFoldername, GetAbsolutePath", () => {
     if (doOnly !== -1 && test.n !== doOnly) continue;
 
     it(`Case ${test.n}: path = ${test.path} file = ${test.file}:`, () => {
-      filesystem.Curr = filesystem.FindPath(test.cwd) as Folder;
+      filesystem.Curr = findFolder(filesystem, test.cwd);
       expect(filesystem.GetFilename(test.path)).toBe(test.file);
     });
     it(`Case ${test.n}: path = ${test.path} base = ${test.base}:`, () => {
-      filesystem.Curr = filesystem.FindPath(test.cwd) as Folder;
+      filesystem.Curr = findFolder(filesystem, test.cwd);
       expect(filesystem.GetBaseFoldername(test.path)).toBe(test.base);
     });
     it(`Case ${test.n}: path = ${test.path} absPath = ${test.absPath}:`, () => {
-      filesystem.Curr = filesystem.FindPath(test.cwd) as Folder;
+      filesystem.Curr = findFolder(filesystem, test.cwd);
       expect(filesystem.GetAbsolutePath(test.path)).toBe(test.absPath);
     });
   }
@@ -144,7 +145,7 @@ describe("FindPath", () => {
     if (doOnly !== -1 && test.n !== doOnly) continue;
 
     it(`Case ${test.n}`, () => {
-      filesystem.Curr = filesystem.FindPath(test.cwd) as Folder;
+      filesystem.Curr = findFolder(filesystem, test.cwd);
       const tmp = filesystem.FindPath(test.path);
       if (test.output === null) expect(tmp).toBeNull();
       else expect((tmp as FilesystemObject).Name).toMatch(test.output);
@@ -182,7 +183,7 @@ describe("CreateFolder", () => {
     it(`Case ${test.n}`, () => {
       let exception = false;
       try {
-        filesystem.Curr = filesystem.FindPath(test.cwd) as Folder;
+        filesystem.Curr = findFolder(filesystem, test.cwd);
         filesystem.CreateFolder(test.path);
       } catch (e) {
         exception = true;
@@ -190,12 +191,12 @@ describe("CreateFolder", () => {
 
       expect(exception).toBe(test.exception);
       if (!test.exception) {
-        let tmp = filesystem.FindPath(test.path) as Folder;
-        expect(tmp).not.toBeNull();
+        let fsObj = filesystem.FindPath(test.path);
+        expect(fsObj).not.toBeNull();
 
         const absPath = filesystem.GetAbsolutePath(test.path);
-        tmp = filesystem.FindPath(absPath) as Folder;
-        expect(tmp).not.toBeNull();
+        fsObj = filesystem.FindPath(absPath);
+        expect(fsObj).not.toBeNull();
       }
     });
   }
@@ -248,7 +249,7 @@ describe("CreateFile", () => {
     it(`Case ${test.n}`, () => {
       let exception = false;
       try {
-        filesystem.Curr = filesystem.FindPath(test.cwd) as Folder;
+        filesystem.Curr = findFolder(filesystem, test.cwd);
         filesystem.CreateFile(test.path);
       } catch (e) {
         exception = true;
@@ -256,9 +257,9 @@ describe("CreateFile", () => {
 
       expect(exception).toBe(test.exception);
       if (!test.exception) {
-        const tmp = filesystem.FindPath(test.final) as Folder;
-        expect(tmp).not.toBeNull();
-        if (tmp != null) expect(tmp instanceof PlainFile).toBeTrue();
+        const fsObj = filesystem.FindPath(test.final);
+        expect(fsObj).not.toBeNull();
+        if (fsObj != null) expect(fsObj instanceof PlainFile).toBeTrue();
       }
     });
   }
@@ -266,3 +267,10 @@ describe("CreateFile", () => {
     expect(doOnly).toBe(-1);
   });
 });
+
+// utilities
+function findFolder(filesystem: Filesystem, path: string): Folder {
+  const fsObj = filesystem.FindPath(path);
+  if (IsFolder(fsObj)) return fsObj;
+  else throw new Error(`internal test error: ${path} is not a folder`);
+}

@@ -25,7 +25,8 @@ export class Filesystem {
     for (let i = 0; i < pathArray.length; i++) {
       if (i != pathArray.length - 1)
         curr = (curr as Folder).LookupFolder(pathArray[i]);
-      else curr = (curr as Folder).Lookup(pathArray[i]);
+      // casting ok
+      else curr = (curr as Folder).Lookup(pathArray[i]); // casting ok
       if (curr == null) return null;
     }
     return curr;
@@ -39,15 +40,14 @@ export class Filesystem {
     let curr: Folder | null = this.GetRoot();
 
     for (let i = 0; i < pathArray.length; i++) {
-      let nextCurr = (curr as Folder).Lookup(pathArray[i]);
+      let nextCurr = (curr as Folder).Lookup(pathArray[i]); // casting ok
       if (nextCurr !== null)
         if (nextCurr instanceof Folder) {
           curr = nextCurr as Folder;
           continue;
         } else throw new Error(`${pathArray[i]} is a file already`);
 
-      nextCurr = new Folder(pathArray[i]);
-      curr.Add(nextCurr);
+      nextCurr = curr.CreateFolder(pathArray[i]);
       curr = nextCurr as Folder;
     }
     return curr as Folder;
@@ -73,9 +73,7 @@ export class Filesystem {
         ? this.CreateFolder(pathArray.join("/"))
         : this.GetRoot();
 
-    const result: PlainFile = new PlainFile(this.GetFilename(path));
-    baseFolder.Add(result);
-    return result;
+    return baseFolder.CreateFile(this.GetFilename(path));
   }
 
   CurrentDirectoryPath() {

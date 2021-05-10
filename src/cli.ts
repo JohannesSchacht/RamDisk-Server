@@ -3,7 +3,8 @@
 import { Filesystem } from "./filesystem";
 
 import {
-  CreateRootFolder,
+  IsPlainFile,
+  IsFolder,
   PlainFile,
   Folder,
   FilesystemObject,
@@ -125,14 +126,12 @@ function cdCommand(cmd: Command, fs: Filesystem): string {
 
   const folderName = cmd.arguments[0];
   if (folderName === "..") {
-    fs.Curr = fs.Curr.Parent as Folder;
+    fs.Curr = fs.Curr.Parent;
     return "";
   }
-  const tmp = fs.FindPath(folderName);
-  if (tmp == null || tmp instanceof PlainFile)
-    throw new Error(`cannot find directory ${folderName}`);
-
-  fs.Curr = tmp as Folder;
+  const fsObj = fs.FindPath(folderName);
+  if (IsFolder(fsObj)) fs.Curr = fsObj;
+  else throw new Error(`cannot find directory ${folderName}`);
   return "";
 }
 
@@ -173,11 +172,9 @@ function getContent(path: string, fs: Filesystem): string {
 function catCommand(cmd: Command, fs: Filesystem): string {
   let result: string = "";
   for (const f of cmd.arguments) {
-    const tmp = fs.FindPath(f);
-    if (tmp == null || tmp instanceof Folder)
-      throw new Error(`File not found: ${f}`);
-    if (result !== "") result += "\n";
-    result += (tmp as PlainFile).Contents;
+    const fsObj = fs.FindPath(f);
+    if (IsPlainFile(fsObj)) result += fsObj.Contents;
+    else throw new Error(`File not found: ${f}`);
   }
   if (cmd.input != null) {
     if (result !== "") result += "\n";
@@ -209,14 +206,14 @@ function lsCommand(cmd: Command, fs: Filesystem): string {
     if (param === "..") {
       folders.push({
         name: "../",
-        folder: fs.Curr.Parent as Folder,
+        folder: fs.Curr.Parent,
       });
       continue;
     }
-    const tmp = fs.FindPath(param);
-    if (tmp == null) throw new Error(`no such file or directory: ${param}`);
-    if (tmp instanceof Folder) folders.push({ name: param, folder: tmp });
-    else files.push({ name: param, file: tmp as PlainFile });
+    const fsObj = fs.FindPath(param);
+    if (IsFolder(fsObj)) folders.push({ name: param, folder: fsObj });
+    else if (IsPlainFile(fsObj)) files.push({ name: param, file: fsObj });
+    else throw new Error(`no such file or directory: ${param}`);
   }
 
   let result: string = "";
@@ -256,13 +253,13 @@ function lsFolder(folder: Folder, longFlag: boolean): string {
   return result;
 }
 
-function lsObject(object: FilesystemObject, extName?: string): string {
-  const typeletter = object instanceof Folder ? "d" : "f";
+function lsObject(fsObj: FilesystemObject, extName?: string): string {
+  const typeletter = fsObj instanceof Folder ? "d" : "f";
   const size =
-    object instanceof Folder
-      ? object.GetEntries().length
-      : (object as PlainFile).Contents.length;
-  const name = extName === undefined ? object.Name : extName;
+    fsObj instanceof Folder
+      ? fsObj.GetEntries().length
+      : (fsObj as PlainFile).Contents.length; // casting ok
+  const name = extName === undefined ? fsObj.Name : extName;
   return `${typeletter}\t${name}\t${size}`;
 }
 
