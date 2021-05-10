@@ -60,9 +60,9 @@ export class Filesystem {
   // If file exist -> return file, otherwise create and all intermediate folders
   // If a file & folder conflict, also along the path, throw error
   CreateFile(path: string): PlainFile {
-    const tmp = this.FindPath(path);
-    if (tmp != null)
-      if (tmp instanceof PlainFile) return tmp;
+    const fsObj = this.FindPath(path);
+    if (fsObj != null)
+      if (fsObj instanceof PlainFile) return fsObj;
       else throw new Error(`${path} is an existing folder`);
 
     const pathArray = this.GetAbsolutePath(path).split("/");

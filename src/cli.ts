@@ -64,9 +64,9 @@ export class Cli {
       case "ls":
         return { exit, output: exec(lsCommand, cmd, this.Fsys) };
       case "cd":
-        const tmp = exec(cdCommand, cmd, this.Fsys);
+        const returnText = exec(cdCommand, cmd, this.Fsys);
         this.Prompt = this.Fsys.CurrentDirectoryPath();
-        return { exit, output: tmp };
+        return { exit, output: returnText };
       case "touch":
         return { exit, output: exec(touchCommand, cmd, this.Fsys) };
       case "echo":
@@ -139,8 +139,8 @@ function touchCommand(cmd: Command, fs: Filesystem): string {
   if (cmd.arguments.length === 0) throw new Error("Missing file operand");
 
   for (const f of cmd.arguments) {
-    const tmp = fs.FindPath(f);
-    if (tmp !== null && tmp instanceof PlainFile) continue;
+    const fsObj = fs.FindPath(f);
+    if (IsPlainFile(fsObj)) continue;
     fs.CreateFile(f);
   }
   return "";
