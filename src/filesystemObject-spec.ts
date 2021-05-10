@@ -66,10 +66,10 @@ describe("Folder: ", () => {
     expect(f1).toBeNull();
   });
   it("adding a file with same name", () => {
-    let f1 = root.LookupFile("File-1") as PlainFile; // casting ok
+    let f1 = root.LookupFile("File-1")!;
     f1.Write(someText);
     root.CreateFile("File-1");
-    f1 = root.LookupFile("File-1") as PlainFile; // casting ok
+    f1 = root.LookupFile("File-1")!;
     expect(f1.Contents).toMatch("");
   });
   it("verify entries with artificial parent", () => {
@@ -91,19 +91,19 @@ describe("Folder: ", () => {
     expect(root.GetEntries().length).toBe(2);
   });
   it("cannot remove non-childs", () => {
-    const someFile = root.LookupFile("File-1A") as PlainFile; // casting ok
+    const someFile = root.LookupFile("File-1A")!;
     expect(() => {
       root.Remove(someFile);
     }).toThrow();
   });
   it("isRoot recognizes root", () => {
     expect(root.IsRoot()).toBeTrue();
-    const folderA = root.LookupFolder("Folder-A") as Folder; // casting ok
+    const folderA = root.LookupFolder("Folder-A")!;
     expect(folderA.IsRoot()).toBeFalse();
   });
   it("gets the right root", () => {
     expect(getRoot(root)).toBe(root);
-    const folderA = root.Lookup("Folder-A") as Folder; // casting ok
+    const folderA = root.LookupFolder("Folder-A")!;
     expect(getRoot(folderA)).toBe(root);
   });
 });

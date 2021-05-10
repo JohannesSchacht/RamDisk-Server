@@ -3,6 +3,7 @@ import {
   PlainFile,
   Folder,
   FilesystemObject,
+  IsFolder,
 } from "./filesystemObject";
 
 export class Filesystem {
@@ -20,14 +21,16 @@ export class Filesystem {
     const abs = this.GetAbsolutePath(path);
     const pathArray = this.GetAbsolutePath(path).split("/");
     pathArray.shift();
-    let curr: FilesystemObject | null = this.GetRoot();
 
+    let curr: Folder = this.GetRoot();
     for (let i = 0; i < pathArray.length; i++) {
-      if (i != pathArray.length - 1)
-        curr = (curr as Folder).LookupFolder(pathArray[i]);
-      // casting ok
-      else curr = (curr as Folder).Lookup(pathArray[i]); // casting ok
-      if (curr == null) return null;
+      const fsObj =
+        i !== pathArray.length - 1
+          ? curr.LookupFolder(pathArray[i])
+          : curr.Lookup(pathArray[i]);
+
+      if (fsObj == null) return null;
+      curr = fsObj as Folder; // casting ok
     }
     return curr;
   }
@@ -37,20 +40,21 @@ export class Filesystem {
   CreateFolder(path: string): Folder {
     const pathArray = this.GetAbsolutePath(path).split("/");
     pathArray.shift();
-    let curr: Folder | null = this.GetRoot();
+    let curr: Folder = this.GetRoot();
 
-    for (let i = 0; i < pathArray.length; i++) {
-      let nextCurr = (curr as Folder).Lookup(pathArray[i]); // casting ok
-      if (nextCurr !== null)
-        if (nextCurr instanceof Folder) {
-          curr = nextCurr as Folder;
-          continue;
-        } else throw new Error(`${pathArray[i]} is a file already`);
-
-      nextCurr = curr.CreateFolder(pathArray[i]);
-      curr = nextCurr as Folder;
+    for (const p of pathArray) {
+      const nextCurr = curr.Lookup(p); // casting ok
+      if (nextCurr === null) {
+        curr = curr.CreateFolder(p);
+        continue;
+      }
+      if (IsFolder(nextCurr)) {
+        curr = nextCurr;
+        continue;
+      }
+      throw new Error(`${p} is a file already`);
     }
-    return curr as Folder;
+    return curr;
   }
 
   GetRoot(): Folder {
@@ -93,7 +97,7 @@ export class Filesystem {
     if (this.isRootName(path)) return path;
     const pathArray = this.GetAbsolutePath(path).split("/");
     pathArray.pop();
-    if (pathArray.length == 1 && pathArray[0] === "") return "/";
+    if (pathArray.length === 1 && pathArray[0] === "") return "/";
     return pathArray.join("/");
   }
 

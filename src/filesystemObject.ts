@@ -3,7 +3,7 @@
 export function CreateRootFolder(): Folder {
   const tmp = { Name: "temorary name" };
   Object.assign(tmp, { Parent: undefined });
-  const root = new Folder("/", tmp as Folder);
+  const root = new Folder("/", tmp as Folder); // casting ok
   root.Parent = root;
   return root;
 }
