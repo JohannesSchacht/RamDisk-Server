@@ -1,6 +1,6 @@
 /* tslint:disable:max-classes-per-file */
 
-export function CreateRootFolder(): Folder {
+export function createRootFolder(): Folder {
 	const tmp = { Name: "temorary name" };
 	Object.assign(tmp, { Parent: undefined });
 	const root = new Folder("/", tmp as Folder); // casting ok
@@ -8,13 +8,13 @@ export function CreateRootFolder(): Folder {
 	return root;
 }
 
-export function IsFolder(
+export function isFolder(
 	fsObject: FilesystemObject | null
 ): fsObject is Folder {
 	return fsObject instanceof Folder;
 }
 
-export function IsPlainFile(
+export function isPlainFile(
 	fsObject: FilesystemObject | null
 ): fsObject is PlainFile {
 	return fsObject instanceof PlainFile;
@@ -45,60 +45,60 @@ export class PlainFile extends FilesystemObject {
 export class Folder extends FilesystemObject {
 	private entries: FilesystemObject[] = [];
 
-	CreateFolder(name: string): Folder {
+	createFolder(name: string): Folder {
 		const newFolder = new Folder(name, this);
-		this.Add(newFolder);
+		this.add(newFolder);
 		return newFolder;
 	}
 
-	CreateFile(name: string): PlainFile {
+	createFile(name: string): PlainFile {
 		const newfile = new PlainFile(name, this);
-		this.Add(newfile);
+		this.add(newfile);
 		return newfile;
 	}
 
-	Add(object: FilesystemObject): FilesystemObject {
-		const o = this.Lookup(object.Name);
-		if (o !== null) this.Remove(o);
+	add(object: FilesystemObject): FilesystemObject {
+		const o = this.lookup(object.Name);
+		if (o !== null) this.remove(o);
 
 		object.Parent = this;
 		this.entries.push(object);
 		return object;
 	}
 
-	Remove(object: FilesystemObject) {
+	remove(object: FilesystemObject) {
 		const idx = this.entries.indexOf(object);
 		if (idx === -1) throw new Error(`"Not found ${object.Name}"`);
 		this.entries.splice(idx, 1);
 	}
 
-	Lookup(name: string): FilesystemObject | null {
+	lookup(name: string): FilesystemObject | null {
 		const result = this.entries.filter((o) => o.Name === name).pop();
 		return result === undefined ? null : result;
 	}
 
-	LookupFolder(name: string): Folder | null {
+	lookupFolder(name: string): Folder | null {
 		const result = this.entries
 			.filter((o) => o.Name === name && o instanceof Folder)
 			.pop();
 		return result === undefined ? null : (result as Folder); // casting ok
 	}
 
-	LookupFile(name: string): PlainFile | null {
+	lookupFile(name: string): PlainFile | null {
 		const result = this.entries
 			.filter((o) => o.Name === name && o instanceof PlainFile)
 			.pop();
 		return result === undefined ? null : (result as PlainFile); // casting ok
 	}
 
-	GetEntries(): FilesystemObject[] {
+	getEntries(): FilesystemObject[] {
 		const f = new Folder("..", this.Parent) as FilesystemObject;
 		return [f].concat(new Array(...this.entries));
 	}
 
-	CurrentDirectoryPath(): string {
+	currentDirectoryPath(): string {
 		if (this.IsRoot()) return "/";
-		const cwd = this.Parent?.CurrentDirectoryPath();
+		const cwd = this.Parent?.currentDirectoryPath();
 		return (cwd === "/" ? "" : cwd) + "/" + this.Name;
 	}
 }

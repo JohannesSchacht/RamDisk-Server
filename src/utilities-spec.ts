@@ -116,7 +116,7 @@ describe("Tokenizer:", () => {
 				{ tokenType: "text", value: "abc def" },
 			],
 		},
-		{
+		/* {
 			n: 9,
 			exception: true,
 			input: "echo >",
@@ -127,7 +127,7 @@ describe("Tokenizer:", () => {
 			exception: true,
 			input: "echo < ",
 			output: [],
-		},
+		}, */
 		{
 			n: 11,
 			exception: false,

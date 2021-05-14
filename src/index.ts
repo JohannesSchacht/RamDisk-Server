@@ -1,21 +1,37 @@
 /*tslint:disable:no-console*/
 
-import { SlowBuffer } from "node:buffer";
 import readline = require("readline");
-import { Shell } from "./shell";
+import { Shell, analyseCommand, Command } from "./shell";
+import { Observable, of } from "rxjs";
+import { map, catchError, tap, takeUntil } from "rxjs/operators";
+import * as su from "./utilities";
 
 const shell = new Shell();
 
-const rl = readline.createInterface(process.stdin, process.stdout);
-rl.setPrompt(`${shell.Prompt}> `);
-rl.prompt();
-rl.on("line", (line: string) => {
-	rl.setPrompt(`${shell.Prompt}> `);
-	const result = shell.Execute(line);
-	if (result.exit) rl.close();
-	else if (result.output !== "") console.log(result.output);
-	rl.setPrompt(`${shell.Prompt}> `);
+const observable = new Observable((subscriber) => {
+	const rl = readline.createInterface(process.stdin, process.stdout);
+	rl.setPrompt(`${shell.prompt}> `);
 	rl.prompt();
-}).on("close", () => {
-	process.exit(0);
-});
+	rl.on("line", (line: string) => {
+		subscriber.next(line);
+		if (shell.exit) {
+			subscriber.complete();
+			rl.close();
+		}
+		rl.setPrompt(`${shell.prompt}> `);
+		rl.prompt();
+	}).on("close", () => {
+		process.exit(0);
+	});
+}).pipe(
+	map((x) => x as string), // why is this needed?
+	map((x) => su.tokenize(x)),
+	map((x) => analyseCommand(x)),
+	map((x) => resultOutput(shell.execute(x))),
+	catchError((e) => of(e.message).pipe(map((x) => console.log(x))))
+);
+observable.subscribe();
+
+function resultOutput(line: string) {
+	if (line !== "") console.log(line);
+}

@@ -1,5 +1,5 @@
 import {
-	CreateRootFolder,
+	createRootFolder,
 	PlainFile,
 	Folder,
 	FilesystemObject,
@@ -47,10 +47,14 @@ export function tokenize(line: string): Token[] {
 		}
 		index += skip;
 		index = skipWhitespace(line, index);
-		const tmp = readToken(line, index);
-		curr.value = tmp.result;
-		index = tmp.index;
-		result.push(curr);
+		try {
+			const tmp = readToken(line, index);
+			curr.value = tmp.result;
+			index = tmp.index;
+			result.push(curr);
+		} catch {
+			index++;
+		}
 	}
 	return result;
 }
@@ -86,10 +90,10 @@ function isWhitespace(c: string): boolean {
 }
 
 export function createSomeFileSystem(root: Folder) {
-	root.CreateFile("File-1");
-	const folderA = root.CreateFolder("Folder-A");
-	folderA.CreateFile("File-A1");
-	folderA.CreateFile("File-A2");
+	root.createFile("File-1");
+	const folderA = root.createFolder("Folder-A");
+	folderA.createFile("File-A1");
+	folderA.createFile("File-A2");
 	return root;
 	/*
     root

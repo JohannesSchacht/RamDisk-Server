@@ -1,9 +1,9 @@
 import {
-	CreateRootFolder,
+	createRootFolder,
 	PlainFile,
 	Folder,
 	FilesystemObject,
-	IsFolder,
+	isFolder,
 } from "./filesystemObject";
 
 import * as su from "./utilities";
@@ -15,7 +15,7 @@ describe("File system root:", () => {
 	let root: Folder;
 
 	beforeEach(() => {
-		root = CreateRootFolder();
+		root = createRootFolder();
 	});
 
 	it("should be defined", () => {
@@ -35,8 +35,8 @@ describe("File system root:", () => {
 describe("Plain file:", () => {
 	let file: PlainFile;
 	beforeEach(() => {
-		const root = CreateRootFolder();
-		file = root.CreateFile("test");
+		const root = createRootFolder();
+		file = root.createFile("test");
 	});
 	it("should initially have an empty string as content", () => {
 		expect(file.Contents).toMatch("");
@@ -54,56 +54,56 @@ describe("Plain file:", () => {
 describe("Folder: ", () => {
 	let root: Folder;
 	beforeEach(() => {
-		root = CreateRootFolder();
+		root = createRootFolder();
 		su.createSomeFileSystem(root);
 	});
 
 	it("Lookop should find a file", () => {
-		let f1 = root.Lookup("File-1");
+		let f1 = root.lookup("File-1");
 		expect(f1).not.toBeNull();
 		expect((f1 as PlainFile).Name).toMatch("File-1"); // casting ok
-		f1 = root.Lookup("not there");
+		f1 = root.lookup("not there");
 		expect(f1).toBeNull();
 	});
 	it("adding a file with same name", () => {
-		let f1 = root.LookupFile("File-1")!;
+		let f1 = root.lookupFile("File-1")!;
 		f1.Write(someText);
-		root.CreateFile("File-1");
-		f1 = root.LookupFile("File-1")!;
+		root.createFile("File-1");
+		f1 = root.lookupFile("File-1")!;
 		expect(f1.Contents).toMatch("");
 	});
 	it("verify entries with artificial parent", () => {
-		const rootEntries = root.GetEntries();
+		const rootEntries = root.getEntries();
 		expect(rootEntries.length).toBe(3);
 		expect(rootEntries[0].Name).toMatch("..");
 		expect(rootEntries[0].Parent).toBe(root);
 	});
 	it("verify removal works", () => {
-		const folderA = root.LookupFolder("Folder-A");
-		if (!IsFolder(folderA))
+		const folderA = root.lookupFolder("Folder-A");
+		if (!isFolder(folderA))
 			throw new Error(`internal test error: Folder-A ist not a folder`);
-		expect(folderA.GetEntries().length).toBe(3);
-		folderA.Remove(folderA.Lookup("File-A1") as FilesystemObject);
-		expect(folderA.GetEntries().length).toBe(2);
-		folderA.Remove(folderA.Lookup("File-A2") as FilesystemObject);
-		expect(folderA.GetEntries().length).toBe(1);
-		root.Remove(folderA);
-		expect(root.GetEntries().length).toBe(2);
+		expect(folderA.getEntries().length).toBe(3);
+		folderA.remove(folderA.lookup("File-A1") as FilesystemObject);
+		expect(folderA.getEntries().length).toBe(2);
+		folderA.remove(folderA.lookup("File-A2") as FilesystemObject);
+		expect(folderA.getEntries().length).toBe(1);
+		root.remove(folderA);
+		expect(root.getEntries().length).toBe(2);
 	});
 	it("cannot remove non-childs", () => {
-		const someFile = root.LookupFile("File-1A")!;
+		const someFile = root.lookupFile("File-1A")!;
 		expect(() => {
-			root.Remove(someFile);
+			root.remove(someFile);
 		}).toThrow();
 	});
 	it("isRoot recognizes root", () => {
 		expect(root.IsRoot()).toBeTrue();
-		const folderA = root.LookupFolder("Folder-A")!;
+		const folderA = root.lookupFolder("Folder-A")!;
 		expect(folderA.IsRoot()).toBeFalse();
 	});
 	it("gets the right root", () => {
 		expect(getRoot(root)).toBe(root);
-		const folderA = root.LookupFolder("Folder-A")!;
+		const folderA = root.lookupFolder("Folder-A")!;
 		expect(getRoot(folderA)).toBe(root);
 	});
 });

@@ -1,34 +1,34 @@
 import {
-	CreateRootFolder,
+	createRootFolder,
 	PlainFile,
 	Folder,
 	FilesystemObject,
-	IsFolder,
+	isFolder,
 } from "./filesystemObject";
 export * from "./filesystemObject";
 
 export class Filesystem {
-	Curr: Folder;
+	curr: Folder;
 	private root: Folder;
 
 	constructor() {
-		this.root = CreateRootFolder();
-		this.Curr = this.root;
+		this.root = createRootFolder();
+		this.curr = this.root;
 	}
 
-	FindPath(path: string): FilesystemObject | null {
-		if (this.isRootName(path)) return this.GetRoot();
+	findPath(path: string): FilesystemObject | null {
+		if (this.isRootName(path)) return this.getRoot();
 
-		const abs = this.GetAbsolutePath(path);
-		const pathArray = this.GetAbsolutePath(path).split("/");
+		const abs = this.getAbsolutePath(path);
+		const pathArray = this.getAbsolutePath(path).split("/");
 		pathArray.shift();
 
-		let curr: Folder = this.GetRoot();
+		let curr: Folder = this.getRoot();
 		for (let i = 0; i < pathArray.length; i++) {
 			const fsObj =
 				i !== pathArray.length - 1
-					? curr.LookupFolder(pathArray[i])
-					: curr.Lookup(pathArray[i]);
+					? curr.lookupFolder(pathArray[i])
+					: curr.lookup(pathArray[i]);
 
 			if (fsObj == null) return null;
 			curr = fsObj as Folder; // casting ok
@@ -38,18 +38,18 @@ export class Filesystem {
 
 	// If folder exists -> return the folder, otherwise create with all intermediate folders
 	// If a file with same name exists (along the path) -> throw error
-	CreateFolder(path: string): Folder {
-		const pathArray = this.GetAbsolutePath(path).split("/");
+	createFolder(path: string): Folder {
+		const pathArray = this.getAbsolutePath(path).split("/");
 		pathArray.shift();
-		let curr: Folder = this.GetRoot();
+		let curr: Folder = this.getRoot();
 
 		for (const p of pathArray) {
-			const nextCurr = curr.Lookup(p); // casting ok
+			const nextCurr = curr.lookup(p); // casting ok
 			if (nextCurr === null) {
-				curr = curr.CreateFolder(p);
+				curr = curr.createFolder(p);
 				continue;
 			}
-			if (IsFolder(nextCurr)) {
+			if (isFolder(nextCurr)) {
 				curr = nextCurr;
 				continue;
 			}
@@ -58,45 +58,45 @@ export class Filesystem {
 		return curr;
 	}
 
-	GetRoot(): Folder {
+	getRoot(): Folder {
 		return this.root;
 	}
 
 	// If file exist -> return file, otherwise create and all intermediate folders
 	// If a file & folder conflict, also along the path, throw error
-	CreateFile(path: string): PlainFile {
-		const fsObj = this.FindPath(path);
+	createFile(path: string): PlainFile {
+		const fsObj = this.findPath(path);
 		if (fsObj != null)
 			if (fsObj instanceof PlainFile) return fsObj;
 			else throw new Error(`${path} is an existing folder`);
 
-		const pathArray = this.GetAbsolutePath(path).split("/");
+		const pathArray = this.getAbsolutePath(path).split("/");
 		const filename = pathArray.pop();
 
 		const baseFolder =
 			pathArray.length > 1
-				? this.CreateFolder(pathArray.join("/"))
-				: this.GetRoot();
+				? this.createFolder(pathArray.join("/"))
+				: this.getRoot();
 
-		return baseFolder.CreateFile(this.GetFilename(path));
+		return baseFolder.createFile(this.getFilename(path));
 	}
 
-	CurrentDirectoryPath() {
-		return this.Curr.CurrentDirectoryPath();
+	currentDirectoryPath() {
+		return this.curr.currentDirectoryPath();
 	}
 
-	GetAbsolutePath(path: string): string {
-		const cwd = this.CurrentDirectoryPath();
+	getAbsolutePath(path: string): string {
+		const cwd = this.currentDirectoryPath();
 		return path[0] === "/" ? path : (cwd === "/" ? "" : cwd) + "/" + path;
 	}
 
-	GetFilename(path: string): string {
-		return this.GetAbsolutePath(path).split("/").pop()!;
+	getFilename(path: string): string {
+		return this.getAbsolutePath(path).split("/").pop()!;
 	}
 
-	GetBaseFoldername(path: string): string {
+	getBaseFoldername(path: string): string {
 		if (this.isRootName(path)) return path;
-		const pathArray = this.GetAbsolutePath(path).split("/");
+		const pathArray = this.getAbsolutePath(path).split("/");
 		pathArray.pop();
 		if (pathArray.length === 1 && pathArray[0] === "") return "/";
 		return pathArray.join("/");

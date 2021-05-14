@@ -2,8 +2,8 @@
 
 import {
 	Filesystem,
-	IsPlainFile,
-	IsFolder,
+	isPlainFile,
+	isFolder,
 	PlainFile,
 	Folder,
 	FilesystemObject,
@@ -20,62 +20,41 @@ export class Command {
 }
 
 export class Shell {
-	Prompt: string;
-	Fsys: Filesystem;
+	prompt: string;
+	exit: boolean = false;
+	fsys: Filesystem;
 
 	constructor() {
-		this.Fsys = new Filesystem();
-		this.Prompt = this.Fsys.Curr.Name;
+		this.fsys = new Filesystem();
+		this.prompt = this.fsys.curr.Name;
 	}
 
-	Execute(line: string): { exit: boolean; output: string } {
-		let tokens: su.Token[];
-		let output: string = "";
-		const exit: boolean = false;
-
-		try {
-			tokens = su.tokenize(line);
-		} catch (e) {
-			output = `Syntax error: ${e.message}`;
-			return { exit, output };
-		}
-
-		let cmd: Command;
-		try {
-			cmd = analyseCommand(tokens);
-		} catch (e) {
-			output = `Illegal command: ${e.message}`;
-			return { exit, output };
-		}
-
+	execute(cmd: Command): string {
 		switch (cmd.command) {
 			case "exit":
-				return { exit: true, output: "" };
+				this.exit = true;
 			case null:
-				return {
-					exit: false,
-					output: line.trim() === "" ? "" : "No command given.",
-				};
+				return "";
 			case "pwd":
-				return { exit, output: pwdCommand(cmd, this.Fsys) };
+				return pwdCommand(cmd, this.fsys);
 			case "mkdir":
-				return { exit, output: exec(mkdirCommand, cmd, this.Fsys) };
+				return exec(mkdirCommand, cmd, this.fsys);
 			case "ls":
-				return { exit, output: exec(lsCommand, cmd, this.Fsys) };
+				return exec(lsCommand, cmd, this.fsys);
 			case "cd":
-				const returnText = exec(cdCommand, cmd, this.Fsys);
-				this.Prompt = this.Fsys.CurrentDirectoryPath();
-				return { exit, output: returnText };
+				const returnText = exec(cdCommand, cmd, this.fsys);
+				this.prompt = this.fsys.currentDirectoryPath();
+				return returnText;
 			case "touch":
-				return { exit, output: exec(touchCommand, cmd, this.Fsys) };
+				return exec(touchCommand, cmd, this.fsys);
 			case "echo":
-				return { exit, output: exec(echoCommand, cmd, this.Fsys) };
+				return exec(echoCommand, cmd, this.fsys);
 			case "cat":
-				return { exit, output: exec(catCommand, cmd, this.Fsys) };
+				return exec(catCommand, cmd, this.fsys);
 			case "rm":
-				return { exit, output: exec(rmCommand, cmd, this.Fsys) };
+				return exec(rmCommand, cmd, this.fsys);
 			default:
-				return { exit, output: `Unkown command: ${cmd.command}` };
+				return `Unkown command: ${cmd.command}`;
 		}
 	}
 }
@@ -95,11 +74,11 @@ function exec(
 	if (cmd.output === null && cmd.outputAppend === null) return result;
 
 	if (cmd.output != null) {
-		const out: PlainFile = fs.CreateFile(cmd.output);
+		const out: PlainFile = fs.createFile(cmd.output);
 		out.Write(result);
 	}
 	if (cmd.outputAppend != null) {
-		const out: PlainFile = fs.CreateFile(cmd.outputAppend);
+		const out: PlainFile = fs.createFile(cmd.outputAppend);
 		out.Append(result);
 	}
 	return "";
@@ -107,29 +86,29 @@ function exec(
 
 // Commands -------------------------------------------------------------
 function pwdCommand(cmd: Command, fs: Filesystem): string {
-	return fs.Curr.Name;
+	return fs.curr.Name;
 }
 
 function mkdirCommand(cmd: Command, fs: Filesystem): string {
 	if (cmd.arguments.length === 0) throw new Error("No directory specified");
-	for (const dir of cmd.arguments) fs.CreateFolder(dir);
+	for (const dir of cmd.arguments) fs.createFolder(dir);
 	return "";
 }
 
 function cdCommand(cmd: Command, fs: Filesystem): string {
 	if (cmd.arguments.length === 0) {
-		fs.Curr = fs.GetRoot();
+		fs.curr = fs.getRoot();
 		return "";
 	}
 	if (cmd.arguments.length > 1) throw new Error("Too many arguments");
 
 	const folderName = cmd.arguments[0];
 	if (folderName === "..") {
-		fs.Curr = fs.Curr.Parent;
+		fs.curr = fs.curr.Parent;
 		return "";
 	}
-	const fsObj = fs.FindPath(folderName);
-	if (IsFolder(fsObj)) fs.Curr = fsObj;
+	const fsObj = fs.findPath(folderName);
+	if (isFolder(fsObj)) fs.curr = fsObj;
 	else throw new Error(`cannot find directory ${folderName}`);
 	return "";
 }
@@ -138,9 +117,9 @@ function touchCommand(cmd: Command, fs: Filesystem): string {
 	if (cmd.arguments.length === 0) throw new Error("Missing file operand");
 
 	for (const f of cmd.arguments) {
-		const fsObj = fs.FindPath(f);
-		if (IsPlainFile(fsObj)) continue;
-		fs.CreateFile(f);
+		const fsObj = fs.findPath(f);
+		if (isPlainFile(fsObj)) continue;
+		fs.createFile(f);
 	}
 	return "";
 }
@@ -155,7 +134,7 @@ function echoCommand(cmd: Command, fs: Filesystem): string {
 }
 
 function getContent(path: string, fs: Filesystem): string {
-	const file = fs.FindPath(path);
+	const file = fs.findPath(path);
 	if (file === null) throw new Error(`cannot find file ${path}`);
 	if (file instanceof PlainFile) return file.Contents;
 
@@ -183,10 +162,10 @@ function catCommand(cmd: Command, fs: Filesystem): string {
 
 function rmCommand(cmd: Command, fs: Filesystem): string {
 	for (const f of cmd.arguments) {
-		const obj = fs.FindPath(f);
+		const obj = fs.findPath(f);
 		if (obj == null) throw new Error(`File not found: ${f}`);
 		if (obj.IsRoot()) throw new Error(`Cannot remove root directory`);
-		obj.Parent?.Remove(obj);
+		obj.Parent?.remove(obj);
 	}
 	return "";
 }
@@ -204,19 +183,19 @@ function lsCommand(cmd: Command, fs: Filesystem): string {
 		if (param === "..") {
 			folders.push({
 				name: "../",
-				folder: fs.Curr.Parent,
+				folder: fs.curr.Parent,
 			});
 			continue;
 		}
-		const fsObj = fs.FindPath(param);
-		if (IsFolder(fsObj)) folders.push({ name: param, folder: fsObj });
-		else if (IsPlainFile(fsObj)) files.push({ name: param, file: fsObj });
+		const fsObj = fs.findPath(param);
+		if (isFolder(fsObj)) folders.push({ name: param, folder: fsObj });
+		else if (isPlainFile(fsObj)) files.push({ name: param, file: fsObj });
 		else throw new Error(`no such file or directory: ${param}`);
 	}
 
 	let result: string = "";
 	if (files.length + folders.length === 0) {
-		result += lsFolder(fs.Curr, longFlag);
+		result += lsFolder(fs.curr, longFlag);
 	} else {
 		for (const fi of files) {
 			if (longFlag) {
@@ -237,7 +216,7 @@ function lsCommand(cmd: Command, fs: Filesystem): string {
 }
 
 function lsFolder(folder: Folder, longFlag: boolean): string {
-	const entries = folder.GetEntries();
+	const entries = folder.getEntries();
 	let result: string = "";
 	for (const o of entries) {
 		if (longFlag) {
@@ -255,7 +234,7 @@ function lsObject(fsObj: FilesystemObject, extName?: string): string {
 	const typeletter = fsObj instanceof Folder ? "d" : "f";
 	const size =
 		fsObj instanceof Folder
-			? fsObj.GetEntries().length
+			? fsObj.getEntries().length
 			: (fsObj as PlainFile).Contents.length; // casting ok
 	const name = extName === undefined ? fsObj.Name : extName;
 	return `${typeletter}\t${name}\t${size}`;
